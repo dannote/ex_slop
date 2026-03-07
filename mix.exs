@@ -1,0 +1,66 @@
+defmodule ExSlop.MixProject do
+  use Mix.Project
+
+  @version "0.1.0"
+  @source_url "https://github.com/dannote/ex_slop"
+
+  def project do
+    [
+      app: :ex_slop,
+      version: @version,
+      elixir: "~> 1.15",
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      name: "ExSlop",
+      description: "Credo checks that catch AI-generated code slop in Elixir",
+      source_url: @source_url,
+      docs: docs(),
+      package: package(),
+      aliases: aliases(),
+      dialyzer: [plt_file: {:no_warn, "_build/dev/dialyxir_plt.plt"}]
+    ]
+  end
+
+  def application do
+    [extra_applications: [:logger]]
+  end
+
+  defp deps do
+    [
+      {:credo, "~> 1.7"},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: ["README.md", "LICENSE"]
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => @source_url},
+      files: ~w(lib mix.exs README.md LICENSE .formatter.exs)
+    ]
+  end
+
+  def cli do
+    [preferred_envs: [ci: :test]]
+  end
+
+  defp aliases do
+    [
+      ci: [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "credo --strict",
+        "dialyzer",
+        "test"
+      ]
+    ]
+  end
+end
