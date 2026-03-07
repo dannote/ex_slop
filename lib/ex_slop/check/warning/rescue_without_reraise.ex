@@ -36,9 +36,9 @@ defmodule ExSlop.Check.Warning.RescueWithoutReraise do
     result.issues
   end
 
-  defp walk({:try, _, [[do: _, rescue: clauses]]} = ast, ctx) when is_list(clauses) do
-    ctx = Enum.reduce(clauses, ctx, &check_clause/2)
-    {ast, ctx}
+  defp walk({:try, _, [blocks]} = ast, ctx) when is_list(blocks) do
+    clauses = Keyword.get(blocks, :rescue, [])
+    {ast, Enum.reduce(clauses, ctx, &check_clause/2)}
   end
 
   defp walk(ast, ctx), do: {ast, ctx}

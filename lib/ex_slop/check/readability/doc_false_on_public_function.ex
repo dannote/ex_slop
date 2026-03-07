@@ -83,7 +83,6 @@ defmodule ExSlop.Check.Readability.DocFalseOnPublicFunction do
   end
 
   defp source_line({:@, meta, _}), do: meta[:line]
-  defp source_line(_), do: nil
 
   defp issue_for(ctx, meta, name) do
     format_issue(ctx,
