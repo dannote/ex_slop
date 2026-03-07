@@ -48,7 +48,8 @@ defmodule ExSlop.MixProject do
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs) -- ~w(lib/mix)
+      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
+      exclude_patterns: ["lib/mix"]
     ]
   end
 
