@@ -40,13 +40,14 @@ defmodule ExSlop.Check.Readability.ObviousComment do
   @impl true
   def run(%SourceFile{} = source_file, params) do
     ctx = Context.build(source_file, params, __MODULE__)
+    doc_ranges = ExSlop.DocRanges.build(Credo.SourceFile.source(source_file))
 
     source_file
     |> Credo.SourceFile.lines()
     |> Enum.reduce(ctx, fn {line_no, line}, ctx ->
       trimmed = String.trim(line)
 
-      if obvious?(trimmed) do
+      if not ExSlop.DocRanges.inside_doc?(line_no, doc_ranges) and obvious?(trimmed) do
         put_issue(ctx, issue_for(ctx, line_no))
       else
         ctx

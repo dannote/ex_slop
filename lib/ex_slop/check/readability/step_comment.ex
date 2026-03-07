@@ -35,11 +35,13 @@ defmodule ExSlop.Check.Readability.StepComment do
   @impl true
   def run(%SourceFile{} = source_file, params) do
     ctx = Context.build(source_file, params, __MODULE__)
+    doc_ranges = ExSlop.DocRanges.build(Credo.SourceFile.source(source_file))
 
     source_file
     |> Credo.SourceFile.lines()
     |> Enum.reduce(ctx, fn {line_no, line}, ctx ->
-      if Regex.match?(@step_pattern, String.trim(line)) do
+      if not ExSlop.DocRanges.inside_doc?(line_no, doc_ranges) and
+           Regex.match?(@step_pattern, String.trim(line)) do
         put_issue(ctx, issue_for(ctx, line_no))
       else
         ctx
