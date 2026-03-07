@@ -6,7 +6,7 @@ Detects patterns that LLMs produce but experienced Elixir developers don't:
 blanket rescues, narrator docs, obvious comments, anti-idiomatic Enum usage,
 try/rescue around non-raising functions, N+1 queries, and more.
 
-None of these overlap with built-in Credo checks.
+21 checks. None overlap with built-in Credo.
 
 ## Installation
 
@@ -27,21 +27,28 @@ Add checks to `.credo.exs`:
         enabled: [
           # ... existing checks ...
 
-          # ExSlop — AI slop detection
+          # ExSlop
           {ExSlop.Check.Warning.BlanketRescue, []},
           {ExSlop.Check.Warning.RescueWithoutReraise, []},
           {ExSlop.Check.Warning.RepoAllThenFilter, []},
           {ExSlop.Check.Warning.QueryInEnumMap, []},
+          {ExSlop.Check.Warning.GenserverAsKvStore, []},
           {ExSlop.Check.Refactor.FilterNil, []},
           {ExSlop.Check.Refactor.ReduceAsMap, []},
           {ExSlop.Check.Refactor.MapIntoLiteral, []},
           {ExSlop.Check.Refactor.IdentityPassthrough, []},
+          {ExSlop.Check.Refactor.IdentityMap, []},
+          {ExSlop.Check.Refactor.CaseTrueFalse, []},
           {ExSlop.Check.Refactor.TryRescueWithSafeAlternative, []},
+          {ExSlop.Check.Refactor.WithIdentityElse, []},
           {ExSlop.Check.Readability.NarratorDoc, []},
           {ExSlop.Check.Readability.DocRestatesName, []},
           {ExSlop.Check.Readability.DocFalseOnPublicFunction, []},
+          {ExSlop.Check.Readability.BoilerplateDocParams, []},
           {ExSlop.Check.Readability.ObviousComment, []},
           {ExSlop.Check.Readability.StepComment, []},
+          {ExSlop.Check.Readability.SectionDivider, []},
+          {ExSlop.Check.Readability.HungarianName, []},
         ]
       }
     }
@@ -58,7 +65,8 @@ Add checks to `.credo.exs`:
 | `BlanketRescue` | `rescue _ -> nil` or `rescue _e -> {:error, "..."}` |
 | `RescueWithoutReraise` | `rescue e -> Logger.error(...); :error` |
 | `RepoAllThenFilter` | `Repo.all(User) \|> Enum.filter(& &1.active)` |
-| `QueryInEnumMap` | `Enum.map(users, fn u -> Repo.all(...) end)` |
+| `QueryInEnumMap` | `Enum.map(users, fn u -> Repo.all(...) end)` — N+1 |
+| `GenserverAsKvStore` | `handle_call({:get, key}, ...) -> Map.get(state, key)` |
 
 ### Refactoring
 
@@ -68,7 +76,10 @@ Add checks to `.credo.exs`:
 | `ReduceAsMap` | `Enum.reduce([], fn x, acc -> [f(x) \| acc] end)` | `Enum.map(&f/1)` |
 | `MapIntoLiteral` | `Enum.map(...) \|> Enum.into(%{})` | `Map.new(...)` |
 | `IdentityPassthrough` | `case r do {:ok, v} -> {:ok, v}; ... end` | `r` |
-| `TryRescueWithSafeAlternative` | `try do String.to_integer(x) rescue _ -> nil end` | `Integer.parse(x)` |
+| `IdentityMap` | `Enum.map(fn x -> x end)` | remove the call |
+| `CaseTrueFalse` | `case flag do true -> a; false -> b end` | `if flag, do: a, else: b` |
+| `TryRescueWithSafeAlternative` | `try do String.to_integer(x) rescue _ end` | `Integer.parse(x)` |
+| `WithIdentityElse` | `with ... else {:error, r} -> {:error, r} end` | remove the `else` |
 
 ### Readability
 
@@ -77,20 +88,24 @@ Add checks to `.credo.exs`:
 | `NarratorDoc` | `@moduledoc "This module provides functionality for..."` |
 | `DocRestatesName` | `@doc "Creates a new user."` on `create_user/1` |
 | `DocFalseOnPublicFunction` | `@doc false` on `def` (not `defp`) |
+| `BoilerplateDocParams` | `## Parameters\n- conn: The connection struct` |
 | `ObviousComment` | `# Fetch the user from the database` |
 | `StepComment` | `# Step 1: Validate input` |
+| `SectionDivider` | `# ============` or `# --- Helpers ---` |
+| `HungarianName` | `user_map = %{}`, `items_list = []` |
 
 ## Why not Credo?
 
-Credo covers ~100 checks, but none of these. Specifically:
+Credo covers ~100 checks. None of these 21 patterns are covered:
 
-- Credo never inspects comment or doc **content** (only presence)
-- Blanket `rescue _ -> nil` is completely unchecked
+- Credo never inspects comment or doc **content** — only presence
+- Blanket `rescue _ -> nil` is unchecked
 - `Enum.filter(fn x -> x != nil end)` is not detected
 - `try/rescue` around `String.to_integer` vs `Integer.parse` — not detected
-- Ecto anti-patterns (`Repo.all |> Enum.filter`, N+1) — not in scope for Credo
+- Ecto anti-patterns (`Repo.all |> Enum.filter`, N+1) — out of scope for Credo
 - `Enum.map |> Enum.into(%{})` — Credo's `MapInto` is disabled for Elixir ≥ 1.8
 - Identity `case` passthrough — Credo's `CaseTrivialMatches` is deprecated
+- GenServer-as-kv-store, identity map, Hungarian names — not in Credo
 
 ## License
 
