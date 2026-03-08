@@ -76,7 +76,7 @@ defmodule ExSlop.Check.Readability.ObviousComment do
 
   defp has_technical_detail?(comment) do
     Regex.match?(
-      ~r/\d|timeout|blocking|because|since|due to|avoid|prevent|N\+1|O\(|concurrent|async|idempotent/i,
+      ~r/\d|timeout|blocking|because|since|due to|avoid|prevent|N\+1|O\(|concurrent|async|idempotent|so that|so we|otherwise|in order|necessary|compat|bootstrap|by hand|workaround|cannot|can't|shouldn't|must not|not supported/i,
       comment
     )
   end

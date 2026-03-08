@@ -4,7 +4,7 @@
 
 Credo checks that catch AI-generated code slop in Elixir.
 
-18 checks for patterns that LLMs produce but experienced Elixir developers
+23 checks for patterns that LLMs produce but experienced Elixir developers
 don't — blanket rescues, narrator docs, obvious comments, anti-idiomatic
 Enum usage, try/rescue around non-raising functions, N+1 queries, and more.
 
@@ -34,7 +34,9 @@ existing `enabled` list:
 {ExSlop.Check.Warning.RepoAllThenFilter, []},
 {ExSlop.Check.Warning.QueryInEnumMap, []},
 {ExSlop.Check.Warning.GenserverAsKvStore, []},
+
 {ExSlop.Check.Refactor.FilterNil, []},
+{ExSlop.Check.Refactor.RejectNil, []},
 {ExSlop.Check.Refactor.ReduceAsMap, []},
 {ExSlop.Check.Refactor.MapIntoLiteral, []},
 {ExSlop.Check.Refactor.IdentityPassthrough, []},
@@ -42,11 +44,15 @@ existing `enabled` list:
 {ExSlop.Check.Refactor.CaseTrueFalse, []},
 {ExSlop.Check.Refactor.TryRescueWithSafeAlternative, []},
 {ExSlop.Check.Refactor.WithIdentityElse, []},
+{ExSlop.Check.Refactor.WithIdentityDo, []},
+{ExSlop.Check.Refactor.SortThenReverse, []},
+{ExSlop.Check.Refactor.StringConcatInReduce, []},
 {ExSlop.Check.Readability.NarratorDoc, []},
 {ExSlop.Check.Readability.DocFalseOnPublicFunction, []},
 {ExSlop.Check.Readability.BoilerplateDocParams, []},
 {ExSlop.Check.Readability.ObviousComment, []},
-{ExSlop.Check.Readability.StepComment, []}
+{ExSlop.Check.Readability.StepComment, []},
+{ExSlop.Check.Readability.NarratorComment, []}
 ```
 
 Cherry-pick only the checks that make sense for your project.
@@ -68,6 +74,7 @@ Cherry-pick only the checks that make sense for your project.
 | Check | Bad | Good |
 |-------|-----|------|
 | `FilterNil` | `Enum.filter(fn x -> x != nil end)` | `Enum.reject(&is_nil/1)` |
+| `RejectNil` | `Enum.reject(fn x -> x == nil end)` | `Enum.reject(&is_nil/1)` |
 | `ReduceAsMap` | `Enum.reduce([], fn x, acc -> [f(x) \| acc] end)` | `Enum.map(&f/1)` |
 | `MapIntoLiteral` | `Enum.map(...) \|> Enum.into(%{})` | `Map.new(...)` |
 | `IdentityPassthrough` | `case r do {:ok, v} -> {:ok, v}; {:error, e} -> {:error, e} end` | `r` |
@@ -75,6 +82,9 @@ Cherry-pick only the checks that make sense for your project.
 | `CaseTrueFalse` | `case flag do true -> a; false -> b end` | `if flag, do: a, else: b` |
 | `TryRescueWithSafeAlternative` | `try do String.to_integer(x) rescue _ -> nil end` | `Integer.parse(x)` |
 | `WithIdentityElse` | `with {:ok, v} <- f() do v else {:error, r} -> {:error, r} end` | drop the `else` |
+| `WithIdentityDo` | `with {:ok, v} <- f() do {:ok, v} end` | `f()` |
+| `SortThenReverse` | `Enum.sort() \|> Enum.reverse()` | `Enum.sort(:desc)` |
+| `StringConcatInReduce` | `Enum.reduce("", fn x, acc -> acc <> x end)` | `Enum.join/1` or IO data |
 
 ### Readability
 
@@ -85,6 +95,7 @@ Cherry-pick only the checks that make sense for your project.
 | `BoilerplateDocParams` | `## Parameters\n- conn: The connection struct` |
 | `ObviousComment` | `# Fetch the user` above `Repo.get(User, id)` |
 | `StepComment` | `# Step 1: Validate input` |
+| `NarratorComment` | `# Here we fetch the user` / `# Now we validate` / `# Let's create` |
 
 ## License
 

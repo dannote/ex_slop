@@ -12,6 +12,7 @@ defmodule ExSlop do
     ExSlop.Check.Warning.QueryInEnumMap,
     ExSlop.Check.Warning.GenserverAsKvStore,
     ExSlop.Check.Refactor.FilterNil,
+    ExSlop.Check.Refactor.RejectNil,
     ExSlop.Check.Refactor.ReduceAsMap,
     ExSlop.Check.Refactor.MapIntoLiteral,
     ExSlop.Check.Refactor.IdentityPassthrough,
@@ -19,11 +20,15 @@ defmodule ExSlop do
     ExSlop.Check.Refactor.CaseTrueFalse,
     ExSlop.Check.Refactor.TryRescueWithSafeAlternative,
     ExSlop.Check.Refactor.WithIdentityElse,
+    ExSlop.Check.Refactor.WithIdentityDo,
+    ExSlop.Check.Refactor.SortThenReverse,
+    ExSlop.Check.Refactor.StringConcatInReduce,
     ExSlop.Check.Readability.NarratorDoc,
     ExSlop.Check.Readability.DocFalseOnPublicFunction,
     ExSlop.Check.Readability.BoilerplateDocParams,
     ExSlop.Check.Readability.ObviousComment,
-    ExSlop.Check.Readability.StepComment
+    ExSlop.Check.Readability.StepComment,
+    ExSlop.Check.Readability.NarratorComment
   ]
 
   def checks, do: @checks
