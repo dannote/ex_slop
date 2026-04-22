@@ -28,7 +28,8 @@ defmodule ExSlop do
     ExSlop.Check.Readability.BoilerplateDocParams,
     ExSlop.Check.Readability.ObviousComment,
     ExSlop.Check.Readability.StepComment,
-    ExSlop.Check.Readability.NarratorComment
+    ExSlop.Check.Readability.NarratorComment,
+    ExSlop.Check.Readability.UnaliasedModuleUse
   ]
 
   def checks, do: @checks

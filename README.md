@@ -52,7 +52,8 @@ existing `enabled` list:
 {ExSlop.Check.Readability.BoilerplateDocParams, []},
 {ExSlop.Check.Readability.ObviousComment, []},
 {ExSlop.Check.Readability.StepComment, []},
-{ExSlop.Check.Readability.NarratorComment, []}
+{ExSlop.Check.Readability.NarratorComment, []},
+{ExSlop.Check.Readability.UnaliasedModuleUse, []}
 ```
 
 Cherry-pick only the checks that make sense for your project.
@@ -96,6 +97,7 @@ Cherry-pick only the checks that make sense for your project.
 | `ObviousComment` | `# Fetch the user` above `Repo.get(User, id)` |
 | `StepComment` | `# Step 1: Validate input` |
 | `NarratorComment` | `# Here we fetch the user` / `# Now we validate` / `# Let's create` |
+| `UnaliasedModuleUse` | `Credo.Code.prewalk` used 2+ times without `alias Credo.Code` |
 
 ## License
 

@@ -19,11 +19,13 @@ defmodule ExSlop.Check.Refactor.WithIdentityDo do
       """
     ]
 
+  alias Credo.Code
+
   @doc false
   @impl true
   def run(%SourceFile{} = source_file, params) do
     ctx = Context.build(source_file, params, __MODULE__)
-    result = Credo.Code.prewalk(source_file, &walk/2, ctx)
+    result = Code.prewalk(source_file, &walk/2, ctx)
     result.issues
   end
 
@@ -60,7 +62,7 @@ defmodule ExSlop.Check.Refactor.WithIdentityDo do
       kw when is_list(kw) ->
         body = Keyword.get(kw, :do)
 
-        Credo.Code.remove_metadata(pattern) == Credo.Code.remove_metadata(body)
+        Code.remove_metadata(pattern) == Code.remove_metadata(body)
 
       _ ->
         false
