@@ -4,13 +4,18 @@ defmodule ExSlop.Check.Readability.UnaliasedModuleUse do
     base_priority: :low,
     category: :readability,
     tags: [:ex_slop],
-    param_defaults: [min_count: 2],
+    param_defaults: [min_count: 3],
     explanations: [
       check: """
-      LLMs tend to inline fully-qualified module names instead of aliasing them.
-      This produces noisy, harder-to-read code.
+      LLMs tend to paste the same fully-qualified module name into every
+      call inside a function body. A single `Credo.Code.prewalk` is fine;
+      five of them in one function is unreadable slop.
 
-          # bad — AI slop
+      Unlike Credo's `AliasUsage` (which flags every nested call and
+      excludes ~50 stdlib lastnames by default), this check only fires
+      when a module is used repeatedly *within a single function body*.
+
+          # bad — AI slop (3+ uses in one function)
           def run(source_file) do
             Credo.Code.prewalk(source_file, &walk/2, ctx)
             Credo.Code.remove_metadata(pattern)
@@ -18,20 +23,23 @@ defmodule ExSlop.Check.Readability.UnaliasedModuleUse do
           end
 
           # good
-          alias Credo.Code
-
           def run(source_file) do
+            alias Credo.Code
             Code.prewalk(source_file, &walk/2, ctx)
             Code.remove_metadata(pattern)
             Code.remove_metadata(body)
           end
+
+          # fine — only one use, no alias needed
+          def run(source_file) do
+            Credo.Code.prewalk(source_file, &walk/2, ctx)
+          end
       """,
       params: [
-        min_count: "Minimum uses of a module before flagging (default: 2)."
+        min_count: "Minimum uses of a module within a single function body (default: 3)."
       ]
     ]
 
-  alias Credo.Code
   alias Credo.Code.Name
 
   @doc false
@@ -40,122 +48,132 @@ defmodule ExSlop.Check.Readability.UnaliasedModuleUse do
     min_count = Params.get(params, :min_count, __MODULE__)
     ctx = Context.build(source_file, params, __MODULE__)
 
-    result = Code.prewalk(source_file, &walk/2, ctx)
-
-    result.issues
-    |> Enum.group_by(& &1.trigger)
-    |> Enum.filter(fn {_trigger, issues} -> length(issues) >= min_count end)
-    |> Enum.flat_map(fn {_trigger, issues} -> issues end)
-  end
-
-  defp walk({:defmodule, _, _} = ast, ctx) do
+    ast = SourceFile.ast(source_file)
     aliases = collect_aliases(ast)
-    mod_deps = Code.Module.modules(ast)
 
-    ctx =
-      Code.prewalk(
-        ast,
-        &find_issues/2,
-        Map.merge(ctx, %{aliases: aliases, mod_deps: mod_deps})
+    find_dense_uses(ast, aliases, min_count)
+    |> Enum.reduce(ctx, fn {trigger, line_no, count}, ctx ->
+      put_issue(
+        ctx,
+        format_issue(ctx,
+          message: "Fully-qualified `#{trigger}` used #{count}× in function — add an `alias`.",
+          trigger: trigger,
+          line_no: line_no
+        )
       )
-
-    {ast, ctx}
+    end)
+    |> Map.get(:issues, [])
   end
-
-  defp walk(ast, ctx), do: {ast, ctx}
 
   defp collect_aliases(ast) do
     {_, %{full: full, local: local}} =
-      Macro.prewalk(ast, %{full: [], local: MapSet.new()}, fn
+      Macro.prewalk(ast, %{full: MapSet.new(), local: MapSet.new()}, fn
         {:alias, _, [{:__aliases__, _, parts}, [as: {:__aliases__, _, local_parts}]]} = node,
-        %{full: full, local: local} = acc ->
+        acc ->
           {node,
            %{
              acc
-             | full: [Name.full(parts) | full],
-               local: MapSet.put(local, Name.full(local_parts))
+             | full: MapSet.put(acc.full, Name.full(parts)),
+               local: MapSet.put(acc.local, Name.full(local_parts))
            }}
 
-        {:alias, _, [{:__aliases__, _, parts} | _]} = node, %{full: full, local: local} = acc ->
+        {:alias, _, [{:__aliases__, _, parts} | _]} = node, acc ->
+          full_name = Name.full(parts)
+          last_name = Name.last(parts)
+
           {node,
-           %{acc | full: [Name.full(parts) | full], local: MapSet.put(local, Name.last(parts))}}
+           %{
+             acc
+             | full: MapSet.put(acc.full, full_name),
+               local: MapSet.put(acc.local, last_name)
+           }}
 
         node, acc ->
           {node, acc}
       end)
 
-    %{
-      full: (full ++ Code.Module.aliases(ast)) |> Enum.uniq(),
-      local: local
-    }
+    %{full: full, local: local}
   end
 
-  # Ignore module attributes — typespecs legitimately use FQNs
-  defp find_issues({:@, _, _}, ctx) do
-    {nil, ctx}
+  defp find_dense_uses(ast, aliases, min_count) do
+    {_, issues} =
+      Macro.prewalk(ast, [], fn
+        {:def, _, _} = node, acc ->
+          {_, fun_counts} =
+            Macro.prewalk(node, %{}, &count_fqns_in_body(&1, &2, aliases))
+
+          fun_issues =
+            fun_counts
+            |> Enum.filter(fn {_trigger, %{count: count}} -> count >= min_count end)
+            |> Enum.map(fn {trigger, %{line_no: line_no, count: count}} ->
+              {trigger, line_no, count}
+            end)
+
+          {node, fun_issues ++ acc}
+
+        {:defp, _, _} = node, acc ->
+          {_, fun_counts} =
+            Macro.prewalk(node, %{}, &count_fqns_in_body(&1, &2, aliases))
+
+          fun_issues =
+            fun_counts
+            |> Enum.filter(fn {_trigger, %{count: count}} -> count >= min_count end)
+            |> Enum.map(fn {trigger, %{line_no: line_no, count: count}} ->
+              {trigger, line_no, count}
+            end)
+
+          {node, fun_issues ++ acc}
+
+        node, acc ->
+          {node, acc}
+      end)
+
+    issues
   end
 
-  # Credo.Code.prewalk(...)
-  defp find_issues({:., meta, [{:__aliases__, _, mod_list}, fun_atom]} = ast, ctx)
+  defp count_fqns_in_body({:@, _, _}, acc, _aliases) do
+    {nil, acc}
+  end
+
+  defp count_fqns_in_body({:alias, _, _}, acc, _aliases) do
+    {nil, acc}
+  end
+
+  defp count_fqns_in_body(
+         {:., meta, [{:__aliases__, _, mod_list}, fun_atom]} = ast,
+         acc,
+         aliases
+       )
        when is_list(mod_list) and is_atom(fun_atom) and length(mod_list) >= 2 do
-    do_find_issues(ast, mod_list, meta, ctx)
-  end
+    if should_skip?(mod_list, aliases) do
+      {ast, acc}
+    else
+      trigger = Name.full(mod_list)
 
-  defp find_issues(ast, ctx) do
-    {ast, ctx}
-  end
+      acc =
+        Map.update(acc, trigger, %{count: 1, line_no: meta[:line]}, fn existing ->
+          %{existing | count: existing.count + 1}
+        end)
 
-  defp do_find_issues(ast, mod_list, meta, ctx) do
-    %{
-      aliases: aliases,
-      mod_deps: mod_deps
-    } = ctx
-
-    cond do
-      Enum.any?(mod_list, &unquote?/1) ->
-        {ast, ctx}
-
-      aliased?(mod_list, aliases) ->
-        {ast, ctx}
-
-      conflicting_module?(mod_list, mod_deps) ->
-        {ast, ctx}
-
-      true ->
-        trigger = Name.full(mod_list)
-
-        {ast, put_issue(ctx, issue_for(ctx, trigger, meta))}
+      {ast, acc}
     end
   end
 
-  defp unquote?({:unquote, _, _}), do: true
-  defp unquote?(_), do: false
+  defp count_fqns_in_body(ast, acc, _aliases) do
+    {ast, acc}
+  end
 
-  defp aliased?(mod_list, %{full: full, local: local}) do
+  defp should_skip?(mod_list, %{full: full, local: local}) do
     full_name = Name.full(mod_list)
 
     cond do
+      Enum.any?(mod_list, &unquote?/1) -> true
       full_name in full -> true
       length(mod_list) >= 2 and Name.full([hd(mod_list)]) in local -> true
       true -> false
     end
   end
 
-  defp conflicting_module?(mod_list, mod_deps) do
-    full_name = Name.full(mod_list)
-    last_name = Name.last(mod_list)
-
-    (mod_deps -- [full_name])
-    |> Enum.filter(&(Name.parts_count(&1) > 1))
-    |> Enum.map(&Name.last/1)
-    |> Enum.any?(&(&1 == last_name))
-  end
-
-  defp issue_for(ctx, trigger, meta) do
-    format_issue(ctx,
-      message: "Fully-qualified `#{trigger}` used repeatedly — add an `alias`.",
-      trigger: trigger,
-      line_no: meta[:line]
-    )
-  end
+  defp unquote?({:unquote, _, _}), do: true
+  defp unquote?(_), do: false
 end

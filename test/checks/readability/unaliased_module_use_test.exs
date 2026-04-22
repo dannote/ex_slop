@@ -3,20 +3,21 @@ defmodule ExSlop.Check.Readability.UnaliasedModuleUseTest do
 
   alias ExSlop.Check.Readability.UnaliasedModuleUse
 
-  test "reports repeated unaliased module use" do
+  test "reports repeated unaliased module use (3× in one function)" do
     """
     defmodule Test do
       def foo(source_file) do
         Credo.Code.prewalk(source_file, &walk/2, [])
         Credo.Code.remove_metadata(source_file)
+        Credo.Code.prewalk(source_file, &walk/2, [])
       end
     end
     """
     |> to_source_file()
     |> run_check(UnaliasedModuleUse)
-    |> assert_issues(fn issues ->
-      assert length(issues) == 2
-      assert Enum.all?(issues, &(&1.trigger == "Credo.Code"))
+    |> assert_issue(fn issue ->
+      assert issue.trigger == "Credo.Code"
+      assert issue.message == "Fully-qualified `Credo.Code` used 3× in function — add an `alias`."
     end)
   end
 
@@ -78,21 +79,36 @@ defmodule ExSlop.Check.Readability.UnaliasedModuleUseTest do
     |> refute_issues()
   end
 
-  test "respects min_count param" do
+  test "respects min_count param — 2× with min_count 3 does NOT fire" do
+    """
+    defmodule Test do
+      def foo do
+        Credo.Code.prewalk(:ok)
+        Credo.Code.remove_metadata(:ok)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(UnaliasedModuleUse, min_count: 3)
+    |> refute_issues()
+  end
+
+  test "respects min_count param — 4× with min_count 3 fires once" do
     """
     defmodule Test do
       def foo do
         Credo.Code.prewalk(:ok)
         Credo.Code.remove_metadata(:ok)
         Credo.Code.prewalk(:ok)
+        Credo.Code.remove_metadata(:ok)
       end
     end
     """
     |> to_source_file()
     |> run_check(UnaliasedModuleUse, min_count: 3)
-    |> assert_issues(fn issues ->
-      assert length(issues) == 3
-      assert Enum.all?(issues, &(&1.trigger == "Credo.Code"))
+    |> assert_issue(fn issue ->
+      assert issue.trigger == "Credo.Code"
+      assert issue.message == "Fully-qualified `Credo.Code` used 4× in function — add an `alias`."
     end)
   end
 
