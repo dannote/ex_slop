@@ -4,7 +4,7 @@
 
 Credo checks that catch AI-generated code slop in Elixir.
 
-27 checks for patterns that LLMs produce but experienced Elixir developers
+28 checks for patterns that LLMs produce but experienced Elixir developers
 don't — blanket rescues, narrator docs, obvious comments, anti-idiomatic
 Enum usage, try/rescue around non-raising functions, N+1 queries, and more.
 
