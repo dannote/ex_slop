@@ -4,7 +4,7 @@
 
 Credo checks that catch AI-generated code slop in Elixir.
 
-28 checks for patterns that LLMs produce but experienced Elixir developers
+29 checks for patterns that LLMs produce but experienced Elixir developers
 don't — blanket rescues, narrator docs, obvious comments, anti-idiomatic
 Enum usage, try/rescue around non-raising functions, N+1 queries, and more.
 
@@ -35,6 +35,7 @@ existing `enabled` list:
 {ExSlop.Check.Warning.QueryInEnumMap, []},
 {ExSlop.Check.Warning.GenserverAsKvStore, []},
 {ExSlop.Check.Warning.PathExpandPriv, []},
+{ExSlop.Check.Warning.DualKeyAccess, []},
 
 {ExSlop.Check.Refactor.FilterNil, []},
 {ExSlop.Check.Refactor.RejectNil, []},
@@ -74,6 +75,7 @@ Cherry-pick only the checks that make sense for your project.
 | `QueryInEnumMap` | `Enum.map(users, fn u -> Repo.get(...) end)` — N+1 query |
 | `GenserverAsKvStore` | GenServer that's just `Map.get`/`Map.put` on state — use ETS or Agent |
 | `PathExpandPriv` | `Path.expand("...priv...", __DIR__)` — use `Application.app_dir/2` |
+| `DualKeyAccess` | `Map.get(m, :key) \|\| Map.get(m, "key")` — normalize once instead |
 
 ### Refactoring
 

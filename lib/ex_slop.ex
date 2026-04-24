@@ -12,6 +12,7 @@ defmodule ExSlop do
     ExSlop.Check.Warning.QueryInEnumMap,
     ExSlop.Check.Warning.GenserverAsKvStore,
     ExSlop.Check.Warning.PathExpandPriv,
+    ExSlop.Check.Warning.DualKeyAccess,
     ExSlop.Check.Refactor.FilterNil,
     ExSlop.Check.Refactor.RejectNil,
     ExSlop.Check.Refactor.ReduceAsMap,
