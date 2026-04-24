@@ -87,4 +87,38 @@ defmodule ExSlop.Check.Warning.BlanketRescueTest do
     |> run_check(BlanketRescue)
     |> refute_issues()
   end
+
+  test "does not flag rescue of specific exception like ArgumentError" do
+    """
+    defmodule C do
+      def parse(str) do
+        try do
+          String.to_existing_atom(str)
+        rescue
+          ArgumentError -> {:error, :unknown}
+        end
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(BlanketRescue)
+    |> refute_issues()
+  end
+
+  test "does not flag rescue of specific exception returning nil" do
+    """
+    defmodule C do
+      def parse(str) do
+        try do
+          String.to_existing_atom(str)
+        rescue
+          ArgumentError -> nil
+        end
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(BlanketRescue)
+    |> refute_issues()
+  end
 end

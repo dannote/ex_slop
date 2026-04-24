@@ -67,8 +67,8 @@ defmodule ExSlop.Check.Warning.BlanketRescue do
 
   defp check_clause(_, ctx), do: ctx
 
-  # _ or _anything
-  defp blanket_pattern?({name, _, _}) when is_atom(name) do
+  # _ or _anything (but NOT __aliases__ which represents module refs like ArgumentError)
+  defp blanket_pattern?({name, _, _}) when is_atom(name) and name != :__aliases__ do
     name |> Atom.to_string() |> String.starts_with?("_")
   end
 
