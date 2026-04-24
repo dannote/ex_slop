@@ -13,7 +13,6 @@ defmodule ExSlop do
     ExSlop.Check.Warning.GenserverAsKvStore,
     ExSlop.Check.Warning.PathExpandPriv,
     ExSlop.Check.Warning.DualKeyAccess,
-    ExSlop.Check.Warning.NilOrEmptyStringCheck,
     ExSlop.Check.Refactor.FilterNil,
     ExSlop.Check.Refactor.RejectNil,
     ExSlop.Check.Refactor.ReduceAsMap,
