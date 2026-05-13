@@ -12,7 +12,7 @@ Most checks avoid built-in Credo overlap: Credo never inspects doc/comment
 **content**, doesn't catch Ecto anti-patterns or identity passthrough, and its
 `MapInto` / `CaseTrivialMatches` checks are disabled or deprecated. A few
 semantic-performance checks intentionally overlap with useful Credo refactors
-so `{ExSlop, :recommended}` can serve generated-code validation pipelines.
+so ExSlop can serve generated-code validation pipelines.
 
 ## Installation
 
@@ -26,14 +26,21 @@ def deps do
 end
 ```
 
-Then add the curated recommended bundle to your `.credo.exs`:
+Register the plugin in your `.credo.exs`:
 
 ```elixir
 # .credo.exs
-{ExSlop, :recommended}
+%{
+  configs: [
+    %{
+      name: "default",
+      plugins: [{ExSlop, []}]
+    }
+  ]
+}
 ```
 
-The recommended bundle enables 30 high-signal checks and leaves noisier style/performance checks opt-in. Or cherry-pick individual checks — append them to the existing `enabled` list:
+This enables 30 high-signal checks automatically and leaves noisier style/performance checks opt-in. Or cherry-pick individual checks — append them to the `extra` list:
 
 ```elixir
 # .credo.exs

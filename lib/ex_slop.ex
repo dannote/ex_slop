@@ -1,21 +1,17 @@
 defmodule ExSlop do
-  use Credo.Check,
-    id: "EXS0000",
-    base_priority: :normal,
-    category: :custom,
-    tags: [:ex_slop],
-    explanations: [
-      check: """
-      Runs the recommended ExSlop checks.
-      """
-    ]
-
   @moduledoc """
-  Credo checks that catch AI-generated code slop in Elixir.
+  Credo plugin that catches AI-generated code slop in Elixir.
 
-  Add `{ExSlop, :recommended}` or individual checks to `.credo.exs` — see
-  `README.md` for details.
+  ## Setup
+
+  Add to your `.credo.exs`:
+
+      %{configs: [%{name: "default", plugins: [{ExSlop, []}]}]}
+
+  Or cherry-pick individual checks in `checks.enabled` — see `README.md`.
   """
+
+  import Credo.Plugin
 
   @core_checks [
     ExSlop.Check.Warning.BlanketRescue,
@@ -101,16 +97,10 @@ defmodule ExSlop do
 
   @checks @core_checks ++ @high_signal_credence_ports ++ @opt_in_credence_ports
 
-  @doc false
-  @impl true
-  def run(%SourceFile{} = source_file, :recommended) do
-    @recommended_checks
-    |> Enum.flat_map(& &1.run(source_file, []))
-    |> Enum.uniq_by(&{&1.filename, &1.line_no, &1.check})
-  end
+  @default_config "%{configs: [%{name: \"default\", checks: %{extra: #{inspect(Enum.map(@recommended_checks, &{&1, []}))}}}]}"
 
-  def run(%SourceFile{} = source_file, params) when is_list(params) do
-    run(source_file, :recommended)
+  def init(exec) do
+    register_default_config(exec, @default_config)
   end
 
   def checks, do: @checks

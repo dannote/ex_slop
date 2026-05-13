@@ -1,15 +1,16 @@
 defmodule ExSlopTest do
-  use Credo.Test.Case
+  use ExUnit.Case
 
-  test "recommended aggregate runs ExSlop checks" do
-    """
-    defmodule Example do
-      def foo(items), do: items |> Enum.sort() |> Enum.reverse()
-    end
-    """
-    |> to_source_file()
-    |> run_check(ExSlop, :recommended)
-    |> assert_issue()
+  test "init/1 is exported for Credo plugin interface" do
+    assert function_exported?(ExSlop, :init, 1)
+  end
+
+  test "recommended_checks returns the recommended subset" do
+    recommended = ExSlop.recommended_checks()
+    all = ExSlop.checks()
+
+    assert [_ | _] = recommended
+    assert Enum.all?(recommended, &(&1 in all))
   end
 
   test "checks includes ported Credence-inspired checks" do
