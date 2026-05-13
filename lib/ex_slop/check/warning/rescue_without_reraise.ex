@@ -37,25 +37,39 @@ defmodule ExSlop.Check.Warning.RescueWithoutReraise do
   end
 
   defp walk({:try, _, [blocks]} = ast, ctx) when is_list(blocks) do
-    clauses = Keyword.get(blocks, :rescue, [])
-    {ast, Enum.reduce(clauses, ctx, &check_clause/2)}
+    case Keyword.get(blocks, :rescue, []) do
+      clauses when is_list(clauses) -> {ast, Enum.reduce(clauses, ctx, &check_clause/2)}
+      _ -> {ast, ctx}
+    end
   end
 
   defp walk(ast, ctx), do: {ast, ctx}
 
-  defp check_clause({:->, meta, [[{name, _, _}], body]}, ctx) when is_atom(name) do
-    name_str = Atom.to_string(name)
+  defp check_clause({:->, meta, [[pattern], body]}, ctx) do
+    case extract_binding(pattern) do
+      {:ok, name} ->
+        if has_logger_call?(body) and not has_reraise?(body) and returns_generic?(body, name) do
+          put_issue(ctx, issue_for(ctx, meta))
+        else
+          ctx
+        end
 
-    if not String.starts_with?(name_str, "_") and has_logger_call?(body) and
-         not has_reraise?(body) and
-         returns_generic?(body) do
-      put_issue(ctx, issue_for(ctx, meta))
-    else
-      ctx
+      :skip ->
+        ctx
     end
   end
 
   defp check_clause(_, ctx), do: ctx
+
+  defp extract_binding({:in, _, [{name, _, ctx}, _]}) when is_atom(name) and is_atom(ctx) do
+    if String.starts_with?(Atom.to_string(name), "_"), do: :skip, else: {:ok, name}
+  end
+
+  defp extract_binding({name, _, ctx}) when is_atom(name) and is_atom(ctx) do
+    if String.starts_with?(Atom.to_string(name), "_"), do: :skip, else: {:ok, name}
+  end
+
+  defp extract_binding(_), do: :skip
 
   defp has_logger_call?(ast) do
     {_, found?} =
@@ -77,19 +91,33 @@ defmodule ExSlop.Check.Warning.RescueWithoutReraise do
     found?
   end
 
-  defp returns_generic?({:__block__, _, exprs}), do: generic_return?(last_expr(exprs))
-  defp returns_generic?(expr), do: generic_return?(expr)
+  defp returns_generic?({:__block__, _, exprs}, name), do: generic_return?(last_expr(exprs), name)
+  defp returns_generic?(expr, name), do: generic_return?(expr, name)
 
   defp last_expr([expr]), do: expr
   defp last_expr([_ | rest]), do: last_expr(rest)
 
-  defp generic_return?(:error), do: true
-  defp generic_return?({:__block__, _, [:error]}), do: true
-  defp generic_return?({:error, _}), do: true
-  defp generic_return?({:{}, _, [:error | _]}), do: true
-  defp generic_return?(nil), do: true
-  defp generic_return?({:__block__, _, [nil]}), do: true
-  defp generic_return?(_), do: false
+  defp generic_return?(expr, name) do
+    case expr do
+      :error -> true
+      {:__block__, _, [:error]} -> true
+      nil -> true
+      {:__block__, _, [nil]} -> true
+      {:error, _} -> not uses_binding?(expr, name)
+      {:{}, _, [:error | _]} -> not uses_binding?(expr, name)
+      _ -> false
+    end
+  end
+
+  defp uses_binding?(ast, name) do
+    {_, found?} =
+      Macro.prewalk(ast, false, fn
+        {^name, _, ctx} = node, _ when is_atom(ctx) -> {node, true}
+        node, found -> {node, found}
+      end)
+
+    found?
+  end
 
   defp issue_for(ctx, meta) do
     format_issue(ctx,
