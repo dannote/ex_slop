@@ -77,6 +77,7 @@ This enables 30 high-signal checks automatically and leaves noisier style/perfor
 {ExSlop.Check.Refactor.ListFold, []},
 {ExSlop.Check.Refactor.ListLast, []},
 {ExSlop.Check.Refactor.LengthInGuard, []},
+{ExSlop.Check.Refactor.LengthComparison, []},
 {ExSlop.Check.Refactor.ExplicitSumReduce, []},
 {ExSlop.Check.Readability.NarratorDoc, []},
 {ExSlop.Check.Readability.DocFalseOnPublicFunction, []},
@@ -132,6 +133,7 @@ Cherry-pick only the checks that make sense for your project.
 | `ListFold` | `List.foldl(list, acc, fun)` | `Enum.reduce(list, acc, fun)` |
 | `ListLast` | `List.last(list)` | avoid needing the last element after traversal |
 | `LengthInGuard` | `def f(xs) when length(xs) == 0` | pattern match on `[]` / `[_ | _]` |
+| `LengthComparison` | `if length(xs) == 0`, `length(xs) <= 5` (any context) | pattern match, or `Enum.count_until/2` for a threshold |
 | `ExplicitSumReduce` | `Enum.reduce(nums, 0, fn n, acc -> n + acc end)` | `Enum.sum(nums)` |
 
 ### Readability
