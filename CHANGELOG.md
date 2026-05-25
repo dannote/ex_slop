@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added **`LengthComparison`** (`EXS4027`) — flags `length/1` compared against an integer literal (`==`, `!=`, `>`, `<`, `>=`, `<=`) in any context, guard or body. Complements `LengthInGuard`, which only covers guards: moving the comparison into an `if` no longer hides it. Use pattern matching (`[]`, `[_ | _]`) or `Enum.count_until/2` for a threshold.
+
 ## 0.4.0
 
 ### Added

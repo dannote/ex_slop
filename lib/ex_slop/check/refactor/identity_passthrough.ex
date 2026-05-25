@@ -42,7 +42,7 @@ defmodule ExSlop.Check.Refactor.IdentityPassthrough do
 
   # case expr do pattern1 -> pattern1; pattern2 -> pattern2 end
   defp walk({:case, meta, [_expr, [do: clauses]]} = ast, ctx) when is_list(clauses) do
-    if length(clauses) >= 2 and Enum.all?(clauses, &identity_clause?/1) do
+    if multiple_clauses?(clauses) and Enum.all?(clauses, &identity_clause?/1) do
       {ast, put_issue(ctx, issue_for(ctx, meta, "case"))}
     else
       {ast, ctx}
@@ -50,6 +50,9 @@ defmodule ExSlop.Check.Refactor.IdentityPassthrough do
   end
 
   defp walk(ast, ctx), do: {ast, ctx}
+
+  defp multiple_clauses?([_, _ | _]), do: true
+  defp multiple_clauses?(_), do: false
 
   defp identity_clause?({:->, _meta, [[pattern], body]}) do
     Code.remove_metadata(pattern) == Code.remove_metadata(body)
