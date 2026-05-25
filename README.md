@@ -40,7 +40,7 @@ Register the plugin in your `.credo.exs`:
 }
 ```
 
-This enables 30 high-signal checks automatically and leaves noisier style/performance checks opt-in. Or cherry-pick individual checks — append them to the `extra` list:
+This enables 31 high-signal checks automatically and leaves noisier style/performance checks opt-in. Or cherry-pick individual checks — append them to the `extra` list:
 
 ```elixir
 # .credo.exs
