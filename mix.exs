@@ -8,7 +8,7 @@ defmodule ExSlop.MixProject do
     [
       app: :ex_slop,
       version: @version,
-      elixir: "~> 1.15",
+      elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "ExSlop",
