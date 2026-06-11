@@ -189,6 +189,17 @@ Enable them in your `.credo.exs` if you haven't already:
 
 Several semantic-performance checks are inspired by [Credence](https://hex.pm/packages/credence), an MIT-licensed standalone semantic linter for generated Elixir code.
 
+## Part of Elixir Vibe
+
+ExSlop catches patterns that AI code generation over-produces — it lints the generator, not the language.
+
+It is one building block of a larger stack — tools that make AI-generated
+software checkable: structural search, dependence analysis, duplication and
+slop detection, session replay, and ecosystem-wide code search. See the
+[Elixir Vibe](https://github.com/elixir-vibe) organization for the rest, and
+[Building Blocks for the Future Web](https://github.com/elixir-vibe/building-blocks)
+for the thesis, architecture, and roadmap that tie them together.
+
 ## License
 
 [MIT](LICENSE)
