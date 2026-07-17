@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.3
+
+### Changed
+
+- Lowered the declared minimum Elixir version from 1.19 to 1.18.
+
+### Fixed
+
+- Made the Credo plugin interface test reliable in clean, isolated builds.
+
 ## 0.4.2
 
 ### Added
