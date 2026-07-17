@@ -2,6 +2,7 @@ defmodule ExSlopTest do
   use ExUnit.Case
 
   test "init/1 is exported for Credo plugin interface" do
+    assert Code.ensure_loaded?(ExSlop)
     assert function_exported?(ExSlop, :init, 1)
   end
 
