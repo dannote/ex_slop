@@ -40,7 +40,28 @@ Register the plugin in your `.credo.exs`:
 }
 ```
 
-This enables 31 high-signal checks automatically and leaves noisier style/performance checks opt-in. Or cherry-pick individual checks — append them to the `extra` list:
+This enables 31 high-signal checks automatically and leaves noisier style/performance checks opt-in.
+
+> [!IMPORTANT]
+> The `plugins:` line only enables the checks when your config does **not**
+> declare an explicit `checks.enabled` list. If you ran `mix credo.gen.config`,
+> your `.credo.exs` has a full `enabled:` list, and Credo treats it as
+> authoritative — it discards the checks the plugin registers, so the plugin
+> contributes nothing. Append the recommended set to your `enabled:` list
+> instead:
+>
+> ```elixir
+> checks: %{
+>   enabled: [
+>     # ...your existing checks...
+>   ] ++ Enum.map(ExSlop.recommended_checks(), &{&1, []}),
+>   # ...
+> }
+> ```
+>
+> ExSlop prints a warning when it detects this situation.
+
+Or cherry-pick individual checks — append them to the `extra` list:
 
 ```elixir
 # .credo.exs

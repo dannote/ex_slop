@@ -102,7 +102,9 @@ defmodule ExSlop do
   @default_config "%{configs: [%{name: \"default\", checks: %{extra: #{inspect(Enum.map(@recommended_checks, &{&1, []}))}}}]}"
 
   def init(exec) do
-    register_default_config(exec, @default_config)
+    exec
+    |> register_default_config(@default_config)
+    |> append_task(:validate_config, ExSlop.Plugin.ActivationWarning)
   end
 
   def checks, do: @checks
