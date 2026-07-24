@@ -1,7 +1,7 @@
 defmodule ExSlop.MixProject do
   use Mix.Project
 
-  @version "0.4.3"
+  @version "0.4.4"
   @source_url "https://github.com/elixir-vibe/ex_slop"
 
   def project do
@@ -65,7 +65,7 @@ defmodule ExSlop.MixProject do
         "test",
         "credo --strict",
         "dialyzer",
-        "ex_dna",
+        "ex_dna --max-clones 2",
         "dogfood"
       ]
     ]

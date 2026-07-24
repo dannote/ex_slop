@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## 0.4.4 - 2026-07-24
+
 ### Added
 
-- Warn when ExSlop is registered as a plugin but none of its checks are active. This happens when `.credo.exs` declares an explicit `checks.enabled` list (as `mix credo.gen.config` generates): Credo treats that list as authoritative and discards the plugin's registered checks, so the plugin silently contributes nothing. The warning points users to append `ExSlop.recommended_checks/0` to their `enabled` list. Also documented in the README installation section.
+- Warn when ExSlop is registered as a plugin but none of its checks are active, typically because an explicit `checks.enabled` list overrides the plugin defaults. The warning and README explain how to append `ExSlop.recommended_checks/0` to the enabled checks.
 
 ## 0.4.3
 
