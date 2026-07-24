@@ -21,6 +21,14 @@ defmodule ExSlop.Plugin.ActivationWarningTest do
     refute ActivationWarning.active?(exec)
   end
 
+  test "active? is false when an ExSlop check is disabled" do
+    exec = %Credo.Execution{
+      checks: %{enabled: [{ExSlop.Check.Refactor.RejectNil, false}]}
+    }
+
+    refute ActivationWarning.active?(exec)
+  end
+
   test "active? stays quiet (true) when the check set is unknown" do
     assert ActivationWarning.active?(%Credo.Execution{checks: nil})
   end

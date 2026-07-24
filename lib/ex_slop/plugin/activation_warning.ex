@@ -1,7 +1,5 @@
 defmodule ExSlop.Plugin.ActivationWarning do
-  @moduledoc """
-  Warns when ExSlop is registered as a plugin but none of its checks are active.
-  """
+  @moduledoc false
 
   use Credo.Execution.Task
 
@@ -14,14 +12,15 @@ defmodule ExSlop.Plugin.ActivationWarning do
     exec
   end
 
-  @doc """
-  Returns `true` when at least one ExSlop check is in the resolved `enabled` set.
-  """
-  def active?(%Credo.Execution{checks: %{enabled: enabled}}) when is_list(enabled) do
-    Enum.any?(enabled, fn {mod, _params} -> mod in ExSlop.checks() end)
+  @doc false
+  def active?(%Execution{checks: %{enabled: enabled}}) when is_list(enabled) do
+    Enum.any?(enabled, fn
+      {_module, false} -> false
+      {module, _params} -> module in ExSlop.checks()
+    end)
   end
 
-  # Returns `true` when the ExSlop check set can't be determined
+  # Stay quiet when the ExSlop check set can't be determined.
   def active?(_exec), do: true
 
   defp warn do
