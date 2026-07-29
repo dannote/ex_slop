@@ -145,12 +145,12 @@ Cherry-pick only the checks that make sense for your project.
 | `RedundantBooleanIf` | `if cond, do: true, else: false` | use the condition directly |
 | `FlatMapFilter` | `Enum.flat_map(fn x -> if cond, do: [x], else: [] end)` | `Enum.filter/2` |
 | `RedundantEnumJoinSeparator` | `Enum.join(parts, "")` | `Enum.join(parts)` |
-| `UseMapJoin` | `Enum.map(...) |> Enum.join(...)` | `Enum.map_join(...)` |
-| `PreferEnumSlice` | `Enum.drop(n) |> Enum.take(k)` | `Enum.slice(enum, n, k)` |
-| `GraphemesLength` | `String.graphemes(s) |> length()` | `String.length(s)` |
-| `ManualStringReverse` | `String.graphemes(s) |> Enum.reverse() |> Enum.join()` | `String.reverse(s)` |
-| `SortThenAt` | `Enum.sort() |> Enum.at(0)` | `Enum.min/1`, `Enum.max/1`, or selection logic |
-| `SortForTopK` | `Enum.sort() |> Enum.take(1)` | `Enum.min/1`, `Enum.max/1`, or top-k selection |
+| `UseMapJoin` | `Enum.map(...) \|> Enum.join(...)` | `Enum.map_join(...)` |
+| `PreferEnumSlice` | `Enum.drop(n) \|> Enum.take(k)` | `Enum.slice(enum, n, k)` |
+| `GraphemesLength` | `String.graphemes(s) \|> length()` | `String.length(s)` |
+| `ManualStringReverse` | `String.graphemes(s) \|> Enum.reverse() \|> Enum.join()` | `String.reverse(s)` |
+| `SortThenAt` | `Enum.sort() \|> Enum.at(0)` | `Enum.min/1`, `Enum.max/1`, or selection logic |
+| `SortForTopK` | `Enum.sort() \|> Enum.take(1)` | `Enum.min/1`, `Enum.max/1`, or top-k selection |
 | `ListFold` | `List.foldl(list, acc, fun)` | `Enum.reduce(list, acc, fun)` |
 | `ListLast` | `List.last(list)` | avoid needing the last element after traversal |
 | `LengthInGuard` | `def f(xs) when length(xs) == 0` | pattern match on `[]` / `[_ | _]` |
